@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from pydantic import BaseModel, EmailStr, Field
@@ -33,6 +34,20 @@ class LoginRequest(BaseModel):
     """Schema for login request."""
     email: EmailStr = Field(..., description="User email address")
     password: str = Field(..., description="User password")
+    
+
+
+@router.post("/token", response_model=TokenResponse)
+async def token(form_data: OAuth2PasswordRequestForm = Depends(), db: AsyncSession = Depends(get_db)):
+    """OAuth2 token endpoint for Swagger UI - accepts form data (username=email, password)."""
+    # OAuth2 uses 'username' field, but we authenticate with email
+    result = await db.execute(select(User).where(User.email == form_data.username))
+    user = result.scalar_one_or_none()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid email/password")
+    access = create_access_token({"user_id": user.id})
+    refresh = create_refresh_token({"user_id": user.id})
+    return {"access_token": access, "refresh_token": refresh, "token_type": "bearer"}
 
 
 @router.post("/login", response_model=TokenResponse)

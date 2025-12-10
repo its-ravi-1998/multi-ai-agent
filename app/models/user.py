@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime
 from datetime import datetime
 from app.db import Base
+from sqlalchemy.types import Float
 
 class User(Base):
     __tablename__ = "users"
@@ -13,3 +14,4 @@ class User(Base):
 
     def __repr__(self):
         return f"<User(id={self.id}, email='{self.email}')>"
+

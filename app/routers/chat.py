@@ -6,7 +6,7 @@ from app.models.user import User
 router = APIRouter()
 
 
-# Request schema for chat message
+
 class ChatRequest(BaseModel):
     """Schema for chat request."""
     message: str = Field(..., description="User's chat message")

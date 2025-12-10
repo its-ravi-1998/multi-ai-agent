@@ -3,7 +3,7 @@ from time import time
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import chat, auth
+from app.routers import chat, auth, detect_intent
 
 
 # Create FastAPI app
@@ -33,6 +33,7 @@ app.add_middleware(
 # Include routers
 app.include_router(chat.router, prefix="/chat", tags=["chat"])
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(detect_intent.router, prefix="/detect-intent", tags=["intent"])
 
 
 # Root endpoint
