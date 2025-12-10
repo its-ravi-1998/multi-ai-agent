@@ -25,16 +25,49 @@ def extract_json_from_text(text: str) -> dict:
     if not text or not text.strip():
         raise ValueError("Empty response from LLM")
     
-    # Try to find JSON object in the response
-    json_match = re.search(r'\{[^{}]*"intent"[^{}]*"confidence"[^{}]*\}', text, re.DOTALL)
-    if json_match:
-        return json.loads(json_match.group())
+    text = text.strip()
     
-    # Try direct JSON parse
+    # Strategy 1: Try to find JSON object with balanced braces
+    json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    matches = re.finditer(json_pattern, text, re.DOTALL)
+    
+    for match in matches:
+        try:
+            json_str = match.group()
+            # Try to parse it
+            result = json.loads(json_str)
+            if "intent" in result and "confidence" in result:
+                return result
+        except json.JSONDecodeError:
+            continue
+    
+    # Strategy 2: Try to extract JSON with more flexible pattern
+    # Look for content between first { and last }
+    first_brace = text.find('{')
+    last_brace = text.rfind('}')
+    
+    if first_brace != -1 and last_brace != -1 and last_brace > first_brace:
+        try:
+            json_str = text[first_brace:last_brace + 1]
+            # Clean up common issues
+            json_str = re.sub(r',\s*}', '}', json_str)  # Remove trailing commas
+            json_str = re.sub(r',\s*]', ']', json_str)  # Remove trailing commas in arrays
+            result = json.loads(json_str)
+            if "intent" in result and "confidence" in result:
+                return result
+        except json.JSONDecodeError:
+            pass
+    
+    # Strategy 3: Try direct JSON parse
     try:
-        return json.loads(text.strip())
+        result = json.loads(text)
+        if "intent" in result and "confidence" in result:
+            return result
     except json.JSONDecodeError:
-        raise ValueError(f"Invalid JSON response from LLM: {text[:100]}")
+        pass
+    
+    # If all strategies fail, raise error with context
+    raise ValueError(f"Could not extract valid JSON from LLM response. Response: {text[:200]}")
 
 
 async def llm_intent_detection(raw_input: str) -> tuple[str, float]:
@@ -46,7 +79,10 @@ async def llm_intent_detection(raw_input: str) -> tuple[str, float]:
         ])
         
         if not response:
-            raise ValueError("Empty response from LLM")
+            print("Warning: Empty response from LLM")
+            return "unknown", 0.0
+        
+        print(f"LLM Response: {response[:200]}")  # Debug: log first 200 chars
         
         result = extract_json_from_text(response)
         
@@ -56,6 +92,7 @@ async def llm_intent_detection(raw_input: str) -> tuple[str, float]:
         return intent, confidence
     except (json.JSONDecodeError, ValueError, KeyError) as e:
         # Fallback to unknown intent if LLM fails
+        print(f"Error in LLM intent detection: {str(e)}")
         return "unknown", 0.0
 
 
@@ -63,5 +100,6 @@ async def intent_detection_agent(raw_input: str) -> tuple[str, float]:
     """Intent detection agent."""
     intent, confidence = rule_based_intent_detection(raw_input)
     if intent is None:
+        print("LLM intent detection...")
         intent, confidence = await llm_intent_detection(raw_input)
     return intent, confidence

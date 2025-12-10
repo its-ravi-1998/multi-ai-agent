@@ -2,6 +2,7 @@ import asyncio
 from app.db import engine, Base
 # Import all models so they're registered with Base.metadata
 from app.models.user import User  # noqa: F401
+from app.models.intent import Intent  # noqa: F401
 
 async def create_all():
     async with engine.begin() as conn:
