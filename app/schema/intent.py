@@ -12,4 +12,6 @@ class IntentCreate(BaseModel):
 class IntentResponse(BaseModel):
     name: str
     confidence: float
+    response: str
+    
     
