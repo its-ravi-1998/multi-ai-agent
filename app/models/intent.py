@@ -12,6 +12,7 @@ class Intent(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     confidence = Column(Float, nullable=False)
     raw_input = Column(String, nullable=False)
+    response = Column(String, nullable=True)
 
     def __repr__(self):
         return f"<Intent(id={self.id}, name='{self.name}', confidence='{self.confidence}', raw_input='{self.raw_input}')>"
