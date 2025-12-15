@@ -118,4 +118,18 @@ async def intent_detection_agent(raw_input: str) -> tuple[str, float]:
     if intent is None:
         print("LLM intent detection...")
         intent, confidence = await llm_intent_detection(raw_input)
+
+    # Safeguard: if image-like keywords are present, force image_generation
+    image_keywords = [
+        "image", "picture", "photo", "render", "3d", "3d render",
+        "generate", "generate an image", "art", "illustration",
+        "digital art", "hd", "8k", "ultra-detailed", "cinematic lighting"
+    ]
+    text = raw_input.lower()
+    if any(k in text for k in image_keywords):
+        if intent != "image_generation":
+            intent = "image_generation"
+            confidence = max(confidence or 0.0, 0.9)
+            print("Intent overridden to image_generation based on keywords")
+
     return intent, confidence
