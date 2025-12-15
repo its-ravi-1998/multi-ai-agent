@@ -8,7 +8,7 @@ load_dotenv()
 # Get DATABASE_URL from environment, or construct it from individual components
 DB_URL = os.getenv("DATABASE_URL")
 if not DB_URL:
-    # Construct URL from individual environment variables
+    # Construct URL from individual environment variables (with sane defaults for dev)
     db_user = os.getenv("DB_USER", "postgres")
     db_password = os.getenv("DB_PASSWORD", "admin")
     db_host = os.getenv("DB_HOST", "localhost")

@@ -1,13 +1,16 @@
 from huggingface_hub import InferenceClient
-import os
 from io import BytesIO
 import base64
 from pathlib import Path
 from datetime import datetime
+from app.config import Settings
+
+# Instantiate settings to read HF token from environment/.env
+settings = Settings()
 
 client = InferenceClient(
     model="black-forest-labs/FLUX.1-schnell",
-    token=os.getenv("HF_TOKEN", "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")
+    token=settings.HF_TOKEN,
 )
 
 
